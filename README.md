@@ -17,12 +17,6 @@ An advanced PDF document structure extraction tool powered by machine learning a
 - **Content Type Classification**: Distinguishes between headings, content, titles, and references
 - **Position-Aware Processing**: Considers document layout and positioning
 
-### 📊 Interactive Interface
-- **Streamlit Web App**: User-friendly interface for document upload and analysis
-- **Real-time Processing**: Live progress tracking and immediate feedback
-- **Batch Processing**: Handle multiple documents simultaneously
-- **Rich Visualizations**: Confidence distributions, success rates, and analytics
-
 ### 💾 Export Options
 - **Multiple Formats**: JSON, text outlines, batch summaries
 - **ZIP Archives**: Bulk download of all results
@@ -74,14 +68,6 @@ python main.py
 
 # Process with custom configuration
 python main.py --config custom_config.json
-```
-
-### Web Interface
-```bash
-# Launch Streamlit app
-streamlit run streamlit_app_enhanced.py
-
-# Access at http://localhost:8501
 ```
 
 ### Docker Deployment
