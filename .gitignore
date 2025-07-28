@@ -27,8 +27,6 @@ MANIFEST
 .env
 .venv
 myenv
-venv/
-ENV/
 env.bak/
 venv.bak/
 
