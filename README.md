@@ -30,12 +30,6 @@ The system supports document processing in multiple languages including:
 - Korean (한국어)
 - European languages (French, Spanish, German, etc.)
 
-Key features:
-- Automatic language detection
-- Language-specific text extraction and cleaning
-- Unicode-compliant processing pipeline
-- Persona analysis adapted for cultural contexts
-
 ## Installation
 
 ### Prerequisites
