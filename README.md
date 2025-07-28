@@ -10,6 +10,7 @@ An advanced PDF document structure extraction tool powered by machine learning a
 - **Semantic Analysis**: Context-aware content classification using transformer embeddings
 - **Confidence Scoring**: Reliability metrics for each extracted element
 - **Multi-Modal Classification**: Combines visual, textual, and semantic signals
+- **Multi-Lingual**:can give outputs even for another language pdfs like japanese, chinese etc.
 
 ### 🧠 Advanced Analysis
 - **Adaptive Clustering**: Dynamic hierarchy level detection based on document characteristics
@@ -21,6 +22,19 @@ An advanced PDF document structure extraction tool powered by machine learning a
 - **Multiple Formats**: JSON, text outlines, batch summaries
 - **ZIP Archives**: Bulk download of all results
 - **Individual Files**: Separate results for each processed document
+
+## Multilingual Support
+The system supports document processing in multiple languages including:
+- Japanese (日本語)
+- Chinese (中文)
+- Korean (한국어)
+- European languages (French, Spanish, German, etc.)
+
+Key features:
+- Automatic language detection
+- Language-specific text extraction and cleaning
+- Unicode-compliant processing pipeline
+- Persona analysis adapted for cultural contexts
 
 ## Installation
 
