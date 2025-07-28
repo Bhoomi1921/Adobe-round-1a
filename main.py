@@ -94,6 +94,10 @@ class PDFDocumentAnalyzer:
             if not document_elements:
                 return {"error": "No extractable content found", "file": pdf_path.name}
             
+            # Debug: Check page numbers after parsing
+            page_nums_after_parsing = [elem.page_num for elem in document_elements]
+            logger.info(f"After parsing - Page range: {min(page_nums_after_parsing)} to {max(page_nums_after_parsing)}")
+            
             # Step 2: Perform semantic analysis
             semantic_vectors = await self.semantic_analyzer.generate_embeddings(document_elements)
             
@@ -101,6 +105,10 @@ class PDFDocumentAnalyzer:
             classified_elements = await self.content_classifier.classify_elements(
                 document_elements, semantic_vectors
             )
+            
+            # Debug: Check page numbers after classification
+            page_nums_after_classification = [elem.page_num for elem in classified_elements]
+            logger.info(f"After classification - Page range: {min(page_nums_after_classification)} to {max(page_nums_after_classification)}")
             
             # Step 4: Build document hierarchy
             document_structure = await self.hierarchy_builder.build_hierarchy(
@@ -111,11 +119,14 @@ class PDFDocumentAnalyzer:
             document_sections = []
             for item in document_structure:
                 if isinstance(item, dict):
+                    # FIXED: Use correct page number field mapping
+                    page_number = item.get('page', 1)  # Get 'page' field, default to 1 if missing
+                    
                     section = DocumentSection(
                         text=item.get('text', ''),
                         level=item.get('level', ''),
                         confidence=item.get('confidence', 0.0),
-                        page_number=item.get('page_number', 0),
+                        page_number=page_number,  # CRITICAL: Ensure correct page number assignment
                         position=item.get('position', {}),
                         font_properties=item.get('font_properties', {}),
                         semantic_score=item.get('semantic_score', 0.0),
@@ -125,6 +136,11 @@ class PDFDocumentAnalyzer:
                     document_sections.append(section)
                 elif isinstance(item, DocumentSection):
                     document_sections.append(item)
+            
+            # Debug: Check page numbers in final sections
+            if document_sections:
+                section_page_nums = [section.page_number for section in document_sections]
+                logger.info(f"Final sections - Page range: {min(section_page_nums)} to {max(section_page_nums)}")
             
             # Step 5: Extract title and create final structure
             document_title = self._extract_document_title(document_sections)
@@ -207,7 +223,7 @@ class PDFDocumentAnalyzer:
             sections_data.append({
                 'hierarchy_level': section.level,
                 'content': section.text,
-                'page': section.page_number,
+                'page': section.page_number,  # CRITICAL: Use the correct page number
                 'confidence_score': round(section.confidence, 3),
                 'coordinates': section.position,
                 'typography': section.font_properties,
@@ -241,12 +257,12 @@ class PDFDocumentAnalyzer:
         if not structure:
             return {}
             
-        pages_analyzed = max(s.page_number for s in structure)
+        pages_analyzed = max(s.page_number for s in structure) if structure else 1
         font_sizes = [s.font_properties.get('size', 0) for s in structure]
         
         return {
             'total_sections_found': len(structure),
-            'pages_analyzed': pages_analyzed,
+            'pages_analyzed': pages_analyzed,  # This should now show correct page count
             'font_sizes_detected': sorted(list(set(font_sizes)), reverse=True),
             'average_confidence': sum(s.confidence for s in structure) / len(structure),
             'section_types': list(set(s.section_type for s in structure)),
@@ -335,7 +351,7 @@ class PDFDocumentAnalyzer:
             return obj
 
         try:
-        # Convert numpy types first
+            # Convert numpy types first
             result = convert_numpy_types(result)
         
             with open(output_path, 'w', encoding='utf-8') as f:
@@ -477,7 +493,7 @@ if __name__ == "__main__":
 #                 classified_elements, semantic_vectors
 #             )
 
-#             # After getting structure from hierarchy_builder
+#             # Convert hierarchy builder output to DocumentSection objects
 #             document_sections = []
 #             for item in document_structure:
 #                 if isinstance(item, dict):
@@ -493,13 +509,15 @@ if __name__ == "__main__":
 #                         word_count=item.get('word_count', 0)
 #                     )
 #                     document_sections.append(section)
+#                 elif isinstance(item, DocumentSection):
+#                     document_sections.append(item)
             
 #             # Step 5: Extract title and create final structure
-#             document_title = self._extract_document_title(document_structure)
+#             document_title = self._extract_document_title(document_sections)
             
 #             # Step 6: Generate comprehensive results
 #             analysis_result = self._compile_results(
-#                 document_title, document_structure, pdf_path
+#                 document_title, document_sections, pdf_path
 #             )
             
 #             logger.info(f"Successfully analyzed: {pdf_path.name}")
@@ -509,116 +527,60 @@ if __name__ == "__main__":
 #             logger.error(f"Analysis failed for {pdf_path.name}: {str(e)}")
 #             return {"error": str(e), "file": pdf_path.name}
     
-#     # def _extract_document_title(self, structure: List[DocumentSection]) -> str:
-#     #     """
-#     #     Advanced title extraction using multiple heuristics
-#     #     """
-#     #     title_candidates = []
-        
-#     #     for section in structure:
-#     #         # Title criteria: high confidence, early page, appropriate length
-#     #         if (section.page_number <= 2 and 
-#     #             section.confidence > 0.8 and
-#     #             5 <= len(section.text) <= 100 and
-#     #             section.semantic_score > 0.7):
-                
-#     #             title_score = self._calculate_title_score(section)
-#     #             title_candidates.append((section.text, title_score))
-        
-#     #     if title_candidates:
-#     #         # Sort by score and return best candidate
-#     #         title_candidates.sort(key=lambda x: x[1], reverse=True)
-#     #         return title_candidates[0][0]
-        
-#     #     return "Document Analysis Result"
-    
-#     # def _calculate_title_score(self, section: Dict) -> float:  # Change type hint
-#     #     score = 0.0
-    
-#     # # Use .get() for dictionary access
-#     #     if section.get('page_number', 0) == 1:
-#     #         score += 3.0
-#     #     elif section.get('page_number', 0) == 2:
-#     #         score += 1.5
-        
-#     # # Continue with dictionary access pattern...
-#     #     font_properties = section.get('font_properties', {})
-#     #     font_size_ratio = font_properties.get('size_ratio', 1.0)
-#     # # ... and so on
-#     # # def _calculate_title_score(self, section: DocumentSection) -> float:
-#     # #     """Calculate title likelihood score"""
-#     # #     score = 0.0
-        
-#     # #     # Page position bonus (earlier = better)
-#     # #     if section.page_number == 1:
-#     # #         score += 3.0
-#     # #     elif section.page_number == 2:
-#     # #         score += 1.5
-            
-#     # #     # Font size bonus
-#     # #     font_size_ratio = section.font_properties.get('size_ratio', 1.0)
-#     #     score += min(font_size_ratio * 2, 4.0)
-        
-#     #     # Position bonus (centered or left-aligned)
-#     #     x_position = section.position.get('x', 0)
-#     #     if 100 <= x_position <= 400:
-#     #         score += 2.0
-#     #     elif x_position < 100:
-#     #         score += 1.0
-            
-#     #     # Text characteristics
-#     #     text_length = len(section.text)
-#     #     if 15 <= text_length <= 60:
-#     #         score += 2.0
-#     #     elif 8 <= text_length <= 80:
-#     #         score += 1.0
-            
-#     #     # Semantic relevance
-#     #     score += section.semantic_score * 2
-        
-#     #     return score
-#     def _extract_document_title(self, structure: List[dict]) -> str:
+#     def _extract_document_title(self, structure: List[DocumentSection]) -> str:
+#         """
+#         Advanced title extraction using multiple heuristics
+#         """
 #         title_candidates = []
-    
-#         for section in structure:
-#         # Use dictionary access
-#             if (section.get('page_number', 0) <= 2 and 
-#                 section.get('confidence', 0) > 0.8 and
-#                 5 <= len(section.get('text', '')) <= 100 and
-#                 section.get('semantic_score', 0) > 0.7):
-            
-#                 title_score = self._calculate_title_score(section)
-#                 title_candidates.append((section.get('text', ''), title_score))
-    
-#         return title_candidates[0][0] if title_candidates else "Document Analysis Result"
-    
-#     def _calculate_title_score(self, section: dict) -> float:
-#         score = 0.0
-#         page_number = section.get('page_number', 0)
-    
-#         if page_number == 1:
-#             score += 3.0
-#         elif page_number == 2:
-#             score += 1.5
         
-#         font_properties = section.get('font_properties', {})
-#         score += min(font_properties.get('size_ratio', 1.0) * 2, 4.0)
+#         for section in structure:
+#             # Title criteria: high confidence, early page, appropriate length
+#             if (section.page_number <= 2 and 
+#                 section.confidence > 0.8 and
+#                 5 <= len(section.text) <= 100 and
+#                 section.semantic_score > 0.7):
+                
+#                 title_score = self._calculate_title_score(section)
+#                 title_candidates.append((section.text, title_score))
+        
+#         if title_candidates:
+#             # Sort by score and return best candidate
+#             title_candidates.sort(key=lambda x: x[1], reverse=True)
+#             return title_candidates[0][0]
+        
+#         return "Document Analysis Result"
     
-#         position = section.get('position', {})
-#         x_position = position.get('x', 0)
+#     def _calculate_title_score(self, section: DocumentSection) -> float:
+#         """Calculate title likelihood score"""
+#         score = 0.0
+        
+#         # Page position bonus (earlier = better)
+#         if section.page_number == 1:
+#             score += 3.0
+#         elif section.page_number == 2:
+#             score += 1.5
+            
+#         # Font size bonus
+#         font_size_ratio = section.font_properties.get('size_ratio', 1.0)
+#         score += min(font_size_ratio * 2, 4.0)
+        
+#         # Position bonus (centered or left-aligned)
+#         x_position = section.position.get('x', 0)
 #         if 100 <= x_position <= 400:
 #             score += 2.0
 #         elif x_position < 100:
 #             score += 1.0
-        
-#         text_length = len(section.get('text', ''))
+            
+#         # Text characteristics
+#         text_length = len(section.text)
 #         if 15 <= text_length <= 60:
 #             score += 2.0
 #         elif 8 <= text_length <= 80:
 #             score += 1.0
+            
+#         # Semantic relevance
+#         score += section.semantic_score * 2
         
-#         score += section.get('semantic_score', 0) * 2
-    
 #         return score
     
 #     def _compile_results(self, title: str, structure: List[DocumentSection], 
@@ -747,8 +709,21 @@ if __name__ == "__main__":
 #         return batch_summary
     
 #     async def _save_result(self, result: Dict, output_path: Path):
-#         """Save analysis result to JSON file"""
+#         """Save analysis result to JSON file with NumPy type handling"""
+#         def convert_numpy_types(obj):
+#             import numpy as np
+#             if isinstance(obj, np.generic):
+#                 return obj.item()  # Convert numpy types to native Python types
+#             elif isinstance(obj, dict):
+#                 return {k: convert_numpy_types(v) for k, v in obj.items()}
+#             elif isinstance(obj, list):
+#                 return [convert_numpy_types(v) for v in obj]
+#             return obj
+
 #         try:
+#         # Convert numpy types first
+#             result = convert_numpy_types(result)
+        
 #             with open(output_path, 'w', encoding='utf-8') as f:
 #                 json.dump(result, f, indent=2, ensure_ascii=False)
 #             logger.info(f"Result saved to: {output_path}")
