@@ -1,4 +1,4 @@
-PDF Structure Analyzer Pro
+# Adobe1a - UNDERSTAND THE DOCUMENT
 
 An advanced PDF document structure extraction tool powered by machine learning and natural language processing.
 
@@ -80,10 +80,20 @@ python main.py --config custom_config.json
 
 ### Docker Deployment
 ```bash
-# Build and run with Docker Compose
-docker-compose up --build
-
-# Access at http://localhost:8501
+# Build Docker Image
+docker build --platform=linux/amd64 -t adobe-doc-processor:round1a .
+#Run Docker Container
+docker run --rm \
+  -v $(PWD)/documents:/app/documents \
+  -v $(PWD)/results:/app/results \
+  --network none \
+  adobe-doc-processor:round1a
+```
+### Run Code
+```bash
+python content_classifier.py document_parser.py hierarchy_builder.py semantic_analyzer.py
+#run main file
+python main.py
 ```
 
 ## Configuration
@@ -178,10 +188,6 @@ Edit `config.json` to customize analysis parameters:
 3. Commit changes (`git commit -am 'Add new feature'`)
 4. Push to branch (`git push origin feature/new-feature`)
 5. Create Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
